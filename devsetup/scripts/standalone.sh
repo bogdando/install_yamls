@@ -63,6 +63,7 @@ if [[ ! -f $SSH_KEY_FILE ]]; then
     exit 1
 fi
 
+sudo dnf install -y python-jinja2
 source ${SCRIPTPATH}/common.sh
 
 # Clock synchronization is important for both Ceph and OpenStack services, so both ceph deploy and tripleo deploy commands will make use of chrony to ensure the clock is properly in sync.
@@ -70,8 +71,20 @@ source ${SCRIPTPATH}/common.sh
 # export NTP_SERVER=pool.ntp.org
 
 if [[ ! -f $REPO_SETUP_CMDS ]]; then
-    echo "$REPO_SETUP_CMDS is missing. Wallaby is end-of-life. Please use OSP 17.1 content to deploy TripleO Standalone and follow the guide for setting up downstream repos."
-    exit 1
+    cat <<EOF > $REPO_SETUP_CMDS
+set -ex
+rm -f /etc/yum.repos.d/delorean*.repo
+sudo dnf remove -y epel-release
+sudo dnf update -y
+sudo dnf install -y vim git curl util-linux lvm2 tmux wget
+URL=https://trunk.rdoproject.org/centos9-wallaby/component/tripleo/current-tripleo/
+RPM_NAME=\$(curl \$URL | grep python3-tripleo-repos | sed -e 's/<[^>]*>//g' | awk 'BEGIN { FS = ".rpm" } ; { print \$1 }')
+RPM=\$RPM_NAME.rpm
+sudo dnf install -y \$URL\$RPM
+sudo -E tripleo-repos -b wallaby current-tripleo-dev ceph --stream
+sudo dnf repolist
+sudo dnf update -y
+EOF
 fi
 
 if [[ -e /run/systemd/resolve/resolv.conf ]]; then
@@ -121,6 +134,8 @@ export HOST_PRIMARY_RESOLV_CONF_ENTRY=${HOST_PRIMARY_RESOLV_CONF_ENTRY}
 export INTERFACE_MTU=${INTERFACE_MTU:-1500}
 export NTP_SERVER=${NTP_SERVER:-"clock.corp.redhat.com"}
 export EDPM_COMPUTE_CEPH_ENABLED=${EDPM_COMPUTE_CEPH_ENABLED:-true}
+export CEPH_ARGS="${CEPH_ARGS:--e \$HOME/deployed_ceph.yaml -e /usr/share/openstack-tripleo-heat-templates/environments/cephadm/cephadm-rbd-only.yaml -e \$HOME/nova_noceph.yaml}"
+export CEPH_IP=${CEPH_IP}
 export CEPH_ARGS="${CEPH_ARGS:--e \$HOME/deployed_ceph.yaml -e /usr/share/openstack-tripleo-heat-templates/environments/cephadm/cephadm-rbd-only.yaml -e \$HOME/nova_noceph.yaml}"
 export COMPUTE_DRIVER=${COMPUTE_DRIVER:-"libvirt"}
 export TOTAL_NODES=${TOTAL_NODES:-1}
@@ -232,7 +247,6 @@ sudo cp /tmp/Standalone.yaml \$HOME/Standalone.yaml
 # is not true, the script will return 0 and cause an error in CI
 exit 0
 EOF
-fi
 
 while [[ $(ssh -o BatchMode=yes -o ConnectTimeout=5 $SSH_OPT root@$IP echo ok) != "ok" ]]; do
     sleep 5
@@ -257,7 +271,6 @@ ctlplane_ip: ${IP}
 os_net_config_iface: ${OS_NET_CONFIG_IFACE}
 standalone_vm: ${STANDALONE_VM}
 ctlplane_subnet: ${IP%.*}.0/24
-ctlplane_vip: ${IP%.*}.99
 ip_address_suffix: ${IP_ADRESS_SUFFIX}
 interface_mtu: ${INTERFACE_MTU:-1500}
 gateway_ip: ${GATEWAY}
@@ -275,6 +288,16 @@ standalone_storage_prefix: ${NETWORK_STORAGE_PREFIX}
 standalone_storage_mgmt_prefix: ${NETWORK_STORAGE_MGMT_PREFIX}
 standalone_tenant_prefix: ${NETWORK_TENANT_PREFIX}
 EOF
+# Additional computes do not require VIPs applied by network config
+if [[ "$EDPM_COMPUTE_SUFFIX" == "0"  ]]; then
+cat << EOF >> ${J2_VARS_FILE}
+ctlplane_vip: ${IP%.*}.99
+external_vip: 172.21.0.2
+internalapi_vip: 172.17.0.2
+storage_vip: 172.18.0.2
+storagemgmt_vip: 172.20.0.2
+EOF
+fi
 
 jinja2_render standalone/network_data.j2 "${J2_VARS_FILE}" > ${MY_TMP_DIR}/network_data.yaml
 jinja2_render standalone/deployed_network.j2 "${J2_VARS_FILE}" > ${MY_TMP_DIR}/deployed_network.yaml
@@ -282,6 +305,7 @@ jinja2_render standalone/net_config.j2 "${J2_VARS_FILE}" > ${MY_TMP_DIR}/net_con
 jinja2_render standalone/role.j2 "${J2_VARS_FILE}" > ${MY_TMP_DIR}/Standalone.yaml
 
 # Copying files
+scp $SSH_OPT $MY_TMP_DIR/.standalone_env_file root@$IP:.standalone_env_file
 scp $SSH_OPT $REPO_SETUP_CMDS root@$IP:/tmp/repo-setup.sh
 scp $SSH_OPT $CMDS_FILE root@$IP:/tmp/standalone-deploy.sh
 scp $SSH_OPT ${MY_TMP_DIR}/net_config.yaml root@$IP:/tmp/net_config.yaml
@@ -297,6 +321,18 @@ scp $SSH_OPT standalone/post_config/ironic.sh root@$IP:/tmp/ironic_post.sh
 scp $SSH_OPT $HOME/.ssh/id_ecdsa.pub root@$IP:/root/.ssh/id_ecdsa.pub
 if [[ -f $HOME/containers-prepare-parameters.yaml ]]; then
     scp $SSH_OPT $HOME/containers-prepare-parameters.yaml root@$IP:/root/containers-prepare-parameters.yaml
+fi
+# For multi-stack deployment, get extracted data from main node index 0 and copy to the target node
+if [[ "$EDPM_COMPUTE_SUFFIX" != "0"  ]] && [[ "$TOTAL_NODES" != "1" ]]; then
+    IP0=${EDPM_COMPUTE_NETWORK_IP%.*}.100
+    EDGE0="edge0"
+    EDGE="edge${EDPM_COMPUTE_SUFFIX}"
+    for f in oslo.json services.yaml net-ip-map.json endpoint-map.json all-nodes-extra-map-data.json extra-host-file-entries.json; do
+        scp $SSH_OPT root@$IP0:${EDGE0}_$f $HOME/${EDGE}_$f
+        scp $SSH_OPT $HOME/${EDGE}_$f root@$IP:${EDGE}_$f
+    done
+    scp $SSH_OPT root@$IP0:tripleo-standalone-passwords.yaml ${EDGE}_passwords.yaml
+    scp $SSH_OPT ${EDGE}_passwords.yaml root@$IP:tripleo-standalone-passwords.yaml
 fi
 
 # Running
