@@ -135,7 +135,6 @@ export NTP_SERVER=${NTP_SERVER:-"clock.corp.redhat.com"}
 export EDPM_COMPUTE_CEPH_ENABLED=${EDPM_COMPUTE_CEPH_ENABLED:-true}
 export CEPH_ARGS="${CEPH_ARGS:--e \$HOME/deployed_ceph.yaml -e /usr/share/openstack-tripleo-heat-templates/environments/cephadm/cephadm-rbd-only.yaml -e \$HOME/nova_noceph.yaml}"
 export CEPH_IP=${CEPH_IP}
-export CEPH_ARGS="${CEPH_ARGS:--e \$HOME/deployed_ceph.yaml -e /usr/share/openstack-tripleo-heat-templates/environments/cephadm/cephadm-rbd-only.yaml -e \$HOME/nova_noceph.yaml}"
 export COMPUTE_DRIVER=${COMPUTE_DRIVER:-"libvirt"}
 export TOTAL_NODES=${TOTAL_NODES:-1}
 export EDPM_COMPUTE_SUFFIX=${1:-"0"}
@@ -157,11 +156,6 @@ else
     sudo hostnamectl set-hostname \${EDPM_COMPUTE_NAME}.${CLOUD_DOMAIN}
     sudo hostnamectl set-hostname \${EDPM_COMPUTE_NAME}.${CLOUD_DOMAIN} --transient
 fi
-
-cat >\$HOME/nova_noceph.yaml <<__EOF__
-parameter_defaults:
-    NovaEnableRbdBackend: false
-__EOF__
 
 cat >\$HOME/sriov_template.yaml <<__EOF__
 parameter_defaults:
