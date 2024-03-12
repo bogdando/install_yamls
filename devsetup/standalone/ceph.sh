@@ -25,29 +25,17 @@ set -ex
 export CEPH_IP=${CEPH_IP:-"172.18.0.100"}
 
 # Create a block device with logical volumes to be used as an OSD.
-#for f in $(seq 1 99); do losetup -d /dev/loop$f; done; rm -f /var/lib/ceph-osd.img
-index=2
-while [ $index -lt 3 ]; do
-    lvs | grep -E 'data-lv\S* vg\S*' && break
-    if losetup | grep -qF /dev/loop$index ; then
-        index=$(( index + 1 ))
-        continue
-    fi
-    test -f /var/lib/ceph-osd.img || sudo dd if=/dev/zero of=/var/lib/ceph-osd.img bs=1 count=0 seek=7G
-    sudo rm -rf /dev/vg$index
-    sudo losetup /dev/loop$index /var/lib/ceph-osd.img
-    sync
-    sudo pvcreate /dev/loop$index
-    sudo vgcreate vg$index /dev/loop$index
-    sudo lvcreate -n data-lv$index -l +100%FREE vg$index
-    break
-done
+sudo dd if=/dev/zero of=/var/lib/ceph-osd.img bs=1 count=0 seek=7G
+sudo losetup /dev/loop3 /var/lib/ceph-osd.img
+sudo pvcreate /dev/loop3
+sudo vgcreate vg2 /dev/loop3
+sudo lvcreate -n data-lv2 -l +100%FREE vg2
 
 # Create an OSD spec file which references the block device.
 cat <<EOF > $HOME/osd_spec.yaml
 data_devices:
   paths:
-    - /dev/vg$index/data-lv$index
+    - /dev/vg2/data-lv2
 EOF
 
 # Use the Ceph IP and OSD spec file to create a Ceph spec file which will describe the Ceph cluster in a format cephadm can parse.
