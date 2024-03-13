@@ -166,6 +166,9 @@ NUMBER_OF_INSTANCES    ?=1
 NFS_HOME	?= /home/nfs
 
 STANDALONE_COMPUTE_DRIVER ?= libvirt
+STANDALONE_OUTPUT_DIR ?= ${PWD}/../out/edpm/
+STANDALONE_SSH_KEY_FILE ?= ${SSH_KEY_FILE:-${STANDALONE_OUTPUT_DIR}/ansibleee-ssh-key-id_rsa}
+STANDALONE_SSH_OPT ?= "-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ${STANDALONE_SSH_KEY_FILE}"
 
 CLEANUP_DIR_CMD ?= rm -Rf
 
@@ -533,6 +536,9 @@ standalone_deploy: export COMPUTE_CEPH_NOVA=${EDPM_COMPUTE_CEPH_NOVA}
 standalone_deploy: export COMPUTE_DHCP_AGENT_ENABLED=${EDPM_COMPUTE_DHCP_AGENT_ENABLED}
 standalone_deploy: export STANDALONE=true
 standalone_deploy: export INTERFACE_MTU=${NETWORK_MTU}
+standalone_deploy: export OUTPUT_DIR=${STANDALONE_OUTPUT_DIR}
+standalone_deploy: export SSH_KEY_FILE=${STANDALONE_SSH_KEY_FILE}
+standalone_deploy: export SSH_OPT=${STANDALONE_SSH_OPT}
 standalone_deploy: export EDPM_COMPUTE_NETWORK = ${NETWORK_ISOLATION_NET_NAME}
 standalone_deploy: export NETWORK_INTERNAL_PREFIX = ${STANDALONE_INTERNALAPI_NET_PREFIX}
 standalone_deploy: export NETWORK_STORAGE_PREFIX = ${STANDALONE_STORAGE_NET_PREFIX}
@@ -574,10 +580,12 @@ standalone_snapshot: ## Create standalone snapshot
 	virsh --connect=qemu:///system snapshot-create-as --atomic --domain edpm-compute-${EDPM_COMPUTE_SUFFIX} --name clean
 
 .PHONY: standalone_revert
+standalone_revert: export OUTPUT_DIR=${STANDALONE_OUTPUT_DIR}
+standalone_revert: export SSH_KEY_FILE=${STANDALONE_SSH_KEY_FILE}
+standalone_revert: export SSH_OPT=${STANDALONE_SSH_OPT}
 standalone_revert: ## Revert standalone snapshot
 	$(eval $(call vars))
-	virsh --connect=qemu:///system snapshot-revert --domain edpm-compute-${EDPM_COMPUTE_SUFFIX} --snapshotname clean
-	make standalone_sync
+	scripts/standalone_revert.sh ${EDPM_COMPUTE_SUFFIX}
 
 .PHONY: cifmw_prepare
 cifmw_prepare: ## Clone the ci-framework repository in the ci-framework directory. That location is ignored from git.
