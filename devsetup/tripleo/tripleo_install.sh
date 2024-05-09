@@ -32,8 +32,8 @@ if [ $EDPM_COMPUTE_CELLS -gt 1 ] ; then
     sed -i "s/overcloud/multistack/g" overcloud_services.yaml
 fi
 
-openstack overcloud network provision --output network_provision_out.yaml ./network_data.yaml
-openstack overcloud network vip provision --stack overcloud --output vips_provision_out.yaml ./vips_data.yaml
+openstack overcloud network provision --output network_provision_out0.yaml ./network_data0.yaml
+openstack overcloud network vip provision --stack overcloud --output vips_provision_out0.yaml ./vips_data0.yaml
 if [ $EDPM_COMPUTE_CELLS -gt 1 ] ; then
     for cell in $(seq 1 $(( EDPM_COMPUTE_CELLS - 1))); do
         echo "provision networks and VIPs for cell $cell"
@@ -100,7 +100,6 @@ else
     sed -i "s/ compute-2/ ${compute2}/" config-download-cell2.yaml
 fi
 set -e
-
 # read all the contents of hostnamemap except the yaml separator into one line
 hostnamemap=$(grep -v "\---" hostnamemap.yaml | tr '\n' '\r')
 hostnamemap="$hostnamemap\r  ControllerHostnameFormat: '%stackname%-controller-%index%'\r"
@@ -112,6 +111,9 @@ if [ $EDPM_COMPUTE_CELLS -gt 1 ] ; then
     hostnamemap="$hostnamemap\r  ComputeHostnameFormat: '%stackname%-compute-%index%'\r"
     hostnamemap="$hostnamemap\r  CellControllerComputeHostnameFormat: '%stackname%-controller-compute-%index%'\r"
     hostnamemap="$hostnamemap\r  CellControllerHostnameFormat: '%stackname%-controller-%index%'\r"
+    cdfile=config-download-multistack.yaml
+else
+    cdfile=config-download.yaml
 fi
 
 if [ $networker_nodes == "TRUE" ]; then
@@ -171,7 +173,7 @@ fi
 
 openstack overcloud deploy --stack overcloud \
     --override-ansible-cfg /home/zuul/ansible_config.cfg --templates /usr/share/openstack-tripleo-heat-templates \
-    --roles-file ${ROLES_FILE} -n /home/zuul/network_data.yaml --libvirt-type qemu \
+    --roles-file ${ROLES_FILE} -n /home/zuul/network_data0.yaml --libvirt-type qemu \
     --ntp-server ${NTP_SERVER} \
     --timeout 90 --overcloud-ssh-user zuul --deployed-server \
     -e /home/zuul/hostnamemap.yaml -e /usr/share/openstack-tripleo-heat-templates/environments/docker-ha.yaml \
@@ -179,7 +181,6 @@ openstack overcloud deploy --stack overcloud \
     -e /usr/share/openstack-tripleo-heat-templates/environments/low-memory-usage.yaml \
     -e /usr/share/openstack-tripleo-heat-templates/environments/debug.yaml --validation-warnings-fatal ${ENV_ARGS} ${CEPH_OVERCLOUD_ARGS} \
     -e /home/zuul/overcloud_services.yaml -e /home/zuul/${cdfiles[0]} \
-    -e /home/zuul/vips_provision_out.yaml -e /home/zuul/network_provision_out.yaml --disable-validations --heat-type pod \
     --disable-protected-resource-types --log-file overcloud_deployment.log
 if [ $EDPM_COMPUTE_CELLS -gt 1 ] ; then
     # FIXME(bogdando): w/a OSP17.1 https://bugzilla.redhat.com/show_bug.cgi?id=2294898 until the fix merged and shipped

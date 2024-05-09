@@ -180,3 +180,20 @@ parameter_defaults:
             default: true
         ip_version: 4
         name: ctlplane-subnet
+  # Update the existing os-net-config on deployed servers for tripleo isolnet
+  # This should also work for CI, where we initially configure zuul subnodes with os-net-config,
+  # but is mostly targeting local libvirt or cloud deployments (without zuul and ci-framework)
+  OVNCMSOptions: enable-chassis-as-gw
+  NeutronPhysicalBridge: br-ex
+  NeutronNetworkType: geneve
+  NeutronTunnelTypes: geneve
+  NeutronBridgeMappings: datacentre:br-ex
+  NetworkConfigWithAnsible: {{ tripleo_networking }}
+  ControllerNetworkConfigUpdate: {{ tripleo_networking }}
+  CellControllerNetworkConfigUpdate: {{ tripleo_networking }}
+  CellControllerComputeNetworkConfigUpdate: {{ tripleo_networking }}
+  ComputeNetworkConfigUpdate: {{ tripleo_networking }}
+  ControllerNetworkConfigTemplate: templates/single_nic_vlans/single_nic_vlans.j2
+  CellControllerNetworkConfigTemplate: templates/single_nic_vlans/single_nic_vlans.j2
+  CellControllerComputeNetworkConfigTemplate: templates/single_nic_vlans/single_nic_vlans.j2
+  ComputeNetworkConfigTemplate: templates/single_nic_vlans/single_nic_vlans.j2
