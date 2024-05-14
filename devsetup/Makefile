@@ -40,6 +40,7 @@ NETWORK_ISOLATION_INSTANCE_NAME ?= crc
 
 EDPM_COMPUTE_SUFFIX ?= 0
 EDPM_NETWORKER_SUFFIX ?= 0
+EDPM_CELL ?= 0
 # EDPM_COMPUTE_ADDITIONAL_NETWORKS: JSON string - list of additional networks
 # Examples:
 #   cat > additional_nets.json << EOF
@@ -529,10 +530,9 @@ standalone_deploy: export CLOUD_DOMAIN=${DNS_DOMAIN}
 standalone_deploy: export COMPUTE_CEPH_ENABLED=${EDPM_COMPUTE_CEPH_ENABLED}
 standalone_deploy: export SINGLE_NODE=${DATAPLANE_SINGLE_NODE}
 standalone_deploy: export TOTAL_NODES=${EDPM_TOTAL_NODES}
-standalone_deploy: export SINGLE_NODE=${DATAPLANE_SINGLE_NODE}
-standalone_deploy: export TOTAL_NODES=${EDPM_TOTAL_NODES}
 standalone_deploy: export CONFIGURE_HUGEPAGES=${EDPM_CONFIGURE_HUGEPAGES}
 standalone_deploy: export COMPUTE_CEPH_NOVA=${EDPM_COMPUTE_CEPH_NOVA}
+standalone_deploy: export COMPUTE_SRIOV_ENABLED=${EDPM_COMPUTE_SRIOV_ENABLED}
 standalone_deploy: export COMPUTE_DHCP_AGENT_ENABLED=${EDPM_COMPUTE_DHCP_AGENT_ENABLED}
 standalone_deploy: export STANDALONE=true
 standalone_deploy: export INTERFACE_MTU=${NETWORK_MTU}
@@ -540,16 +540,7 @@ standalone_deploy: export OUTPUT_DIR=${STANDALONE_OUTPUT_DIR}
 standalone_deploy: export SSH_KEY_FILE=${STANDALONE_SSH_KEY_FILE}
 standalone_deploy: export SSH_OPT=${STANDALONE_SSH_OPT}
 standalone_deploy: export EDPM_COMPUTE_NETWORK = ${NETWORK_ISOLATION_NET_NAME}
-standalone_deploy: export NETWORK_INTERNAL_PREFIX = ${STANDALONE_INTERNALAPI_NET_PREFIX}
-standalone_deploy: export NETWORK_STORAGE_PREFIX = ${STANDALONE_STORAGE_NET_PREFIX}
-standalone_deploy: export NETWORK_STORAGE_MGMT_PREFIX = ${STANDALONE_STORAGEMGMT_NET_PREFIX}
-standalone_deploy: export NETWORK_TENANT_PREFIX = ${STANDALONE_TENANT_NET_PREFIX}
-standalone_deploy: export NETWORK_EXTERNAL_PREFFIX = ${STANDALONE_EXTERNAL_NET_PREFFIX}
-standalone_deploy: export ADOPTED_INTERNAL_NET = ${ADOPTED_INTERNALAPI_NETWORK}
-standalone_deploy: export ADOPTED_STORAGE_NET = ${ADOPTED_STORAGE_NETWORK}
-standalone_deploy: export ADOPTED_STORAGE_MGMT_NET = ${ADOPTED_STORAGEMGMT_NETWORK}
-standalone_deploy: export ADOPTED_TENANT_NET = ${ADOPTED_TENANT_NETWORK}
-standalone_deploy: export ADOPTED_EXTERNAL_NET = ${ADOPTED_EXTERNAL_NETWORK}
+standalone_deploy: export CELL = ${EDPM_CELL}
 standalone_deploy:
 	$(eval $(call vars))
 	scripts/standalone.sh ${EDPM_COMPUTE_SUFFIX} ${STANDALONE_COMPUTE_DRIVER} '${EDPM_COMPUTE_ADDITIONAL_NETWORKS}' '${EDPM_COMPUTE_ADDITIONAL_HOST_ROUTES}'
