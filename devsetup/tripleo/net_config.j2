@@ -28,6 +28,14 @@ network_config:
     mtu: {{ interface_mtu }}
     # force the MAC address of the bridge to this interface
     primary: true
+  # external
+  - type: vlan
+    mtu: {{ interface_mtu }}
+    vlan_id: 44
+    addresses:
+    - ip_netmask: 172.21.0.{{ ip_address_suffix }}/16
+    - ip_netmask: 172.21.0.2/32
+    routes: []
   # internal
   - type: vlan
     mtu: {{ interface_mtu }}

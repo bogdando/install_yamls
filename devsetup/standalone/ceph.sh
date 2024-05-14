@@ -64,7 +64,7 @@ sudo openstack overcloud ceph spec \
     --standalone \
     --mon-ip $CEPH_IP \
     --osd-spec $HOME/osd_spec.yaml \
-    --output $HOME/ceph_spec.yaml --yes
+    --output $HOME/ceph_spec.yaml
 
 # Create the ceph-admin user by passing the Ceph spec created earlier.
 sudo openstack overcloud ceph user enable \
@@ -83,7 +83,6 @@ EOF
 
 # Use the files created in the previous steps to install Ceph.
 # Use thw network_data.yaml file so that Ceph uses the isolated networks for storage and storage management.
-# Allow redeploying it with stack UPDATE
 sudo openstack overcloud ceph deploy \
     --mon-ip $CEPH_IP \
     --ceph-spec $HOME/ceph_spec.yaml \
@@ -91,13 +90,11 @@ sudo openstack overcloud ceph deploy \
     --container-image-prepare $HOME/containers-prepare-parameters.yaml \
     --standalone \
     --single-host-defaults \
-    --cephadm-extra-args="--skip-mon-network" \
-    --force \
     --skip-hosts-config \
     --skip-container-registry-config \
     --skip-user-create \
     --network-data /tmp/network_data.yaml \
     --ntp-server $NTP_SERVER \
-    --output $HOME/deployed_ceph.yaml --yes
+    --output $HOME/deployed_ceph.yaml
 
 # Ceph should now be installed. Use sudo cephadm shell -- ceph -s to confirm the Ceph cluster health.

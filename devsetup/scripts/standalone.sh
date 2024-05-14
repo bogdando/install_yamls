@@ -22,6 +22,7 @@ export VIRSH_DEFAULT_CONNECT_URI=qemu:///system
 SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 EDPM_COMPUTE_SUFFIX=${1:-"0"}
 COMPUTE_DRIVER=${2:-"libvirt"}
+CELL=${EDPM_CELL:-0}
 EDPM_COMPUTE_ADDITIONAL_NETWORKS=${3:-'[]'}
 EDPM_COMPUTE_ADDITIONAL_HOST_ROUTES=${4:-'[]'}
 EDPM_COMPUTE_NAME=${EDPM_COMPUTE_NAME:-"edpm-compute-${EDPM_COMPUTE_SUFFIX}"}
@@ -157,6 +158,11 @@ else
     sudo hostnamectl set-hostname \${EDPM_COMPUTE_NAME}.${CLOUD_DOMAIN} --transient
 fi
 
+cat >\$HOME/nova_noceph.yaml <<__EOF__
+parameter_defaults:
+    NovaEnableRbdBackend: false
+__EOF__
+
 cat >\$HOME/sriov_template.yaml <<__EOF__
 parameter_defaults:
     NovaPCIPassthrough:
@@ -247,17 +253,12 @@ dns_server: ${PRIMARY_RESOLV_CONF_ENTRY}
 compute_driver: ${COMPUTE_DRIVER}
 sriov_agent: ${EDPM_COMPUTE_SRIOV_ENABLED}
 dhcp_agent: ${EDPM_COMPUTE_DHCP_AGENT_ENABLED}
+ctlplane_vip: ${IP%.*}.$(( 99 - CELL ))
+external_vip: 172.21.${CELL}.2
+internalapi_vip: 172.17.${CELL}.2
+storage_vip: 172.18.${CELL}.2
+storagemgmt_vip: 172.20.${CELL}.2
 EOF
-# Additional computes do not require VIPs applied by network config
-if [[ "$EDPM_COMPUTE_SUFFIX" == "0"  ]]; then
-cat << EOF >> ${J2_VARS_FILE}
-ctlplane_vip: ${IP%.*}.99
-external_vip: 172.21.0.2
-internalapi_vip: 172.17.0.2
-storage_vip: 172.18.0.2
-storagemgmt_vip: 172.20.0.2
-EOF
-fi
 
 jinja2_render standalone/network_data.j2 "${J2_VARS_FILE}" > ${MY_TMP_DIR}/network_data.yaml
 jinja2_render standalone/deployed_network.j2 "${J2_VARS_FILE}" > ${MY_TMP_DIR}/deployed_network.yaml
@@ -281,18 +282,6 @@ scp $SSH_OPT $HOME/.ssh/id_ecdsa.pub root@$IP:/root/.ssh/id_ecdsa.pub
 if [[ -f $HOME/containers-prepare-parameters.yaml ]]; then
     scp $SSH_OPT $HOME/containers-prepare-parameters.yaml root@$IP:/root/containers-prepare-parameters.yaml
 fi
-# For multi-stack deployment, get extracted data from main node index 0 and copy to the target node
-if [[ "$EDPM_COMPUTE_SUFFIX" != "0"  ]] && [[ "$TOTAL_NODES" != "1" ]]; then
-    IP0=${EDPM_COMPUTE_NETWORK_IP%.*}.100
-    EDGE0="edge0"
-    EDGE="edge${EDPM_COMPUTE_SUFFIX}"
-    for f in oslo.json services.yaml net-ip-map.json endpoint-map.json all-nodes-extra-map-data.json extra-host-file-entries.json; do
-        scp $SSH_OPT root@$IP0:${EDGE0}_$f $HOME/${EDGE}_$f
-        scp $SSH_OPT $HOME/${EDGE}_$f root@$IP:${EDGE}_$f
-    done
-    scp $SSH_OPT root@$IP0:tripleo-standalone-passwords.yaml ${EDGE}_passwords.yaml
-    scp $SSH_OPT ${EDGE}_passwords.yaml root@$IP:tripleo-standalone-passwords.yaml
-fi
 
 # Running
 if [[ -z ${SKIP_TRIPLEO_REPOS} || ${SKIP_TRIPLEO_REPOS} == "false" ]]; then
@@ -304,7 +293,3 @@ fi
 if [[ -n ${STANDALONE_EXTRA_CMD} ]]; then
     ssh $SSH_OPT root@$IP "${STANDALONE_EXTRA_CMD}"
 fi
-#ssh $SSH_OPT root@$IP "bash /tmp/standalone-deploy.sh"
-#deploy_result="$?"
-#ssh $SSH_OPT root@$IP "rm -f /tmp/standalone-deploy.sh"
-#exit $deploy_result

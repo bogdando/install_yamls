@@ -32,8 +32,8 @@ if [ $EDPM_COMPUTE_CELLS -gt 1 ] ; then
     sed -i "s/overcloud/multistack/g" overcloud_services.yaml
 fi
 
-openstack overcloud network provision --output network_provision_out0.yaml ./network_data0.yaml
-openstack overcloud network vip provision --stack overcloud --output vips_provision_out0.yaml ./vips_data0.yaml
+openstack overcloud network provision --output network_provision_out.yaml ./network_data.yaml
+openstack overcloud network vip provision --stack overcloud --output vips_provision_out.yaml ./vips_data.yaml
 if [ $EDPM_COMPUTE_CELLS -gt 1 ] ; then
     for cell in $(seq 1 $(( EDPM_COMPUTE_CELLS - 1))); do
         echo "provision networks and VIPs for cell $cell"
@@ -111,9 +111,6 @@ if [ $EDPM_COMPUTE_CELLS -gt 1 ] ; then
     hostnamemap="$hostnamemap\r  ComputeHostnameFormat: '%stackname%-compute-%index%'\r"
     hostnamemap="$hostnamemap\r  CellControllerComputeHostnameFormat: '%stackname%-controller-compute-%index%'\r"
     hostnamemap="$hostnamemap\r  CellControllerHostnameFormat: '%stackname%-controller-%index%'\r"
-    cdfile=config-download-multistack.yaml
-else
-    cdfile=config-download.yaml
 fi
 
 if [ $networker_nodes == "TRUE" ]; then
@@ -149,7 +146,6 @@ done
 MANILA_ENABLED=${MANILA_ENABLED:-true}
 if [ "$MANILA_ENABLED" = "true" ]; then
     ENV_ARGS+=" -e /usr/share/openstack-tripleo-heat-templates/environments/manila-cephfsnative-config.yaml"
-fi
 # Add octavia bits
 OCTAVIA_ENABLED=${OCTAVIA_ENABLED:-false}
 if [ "$OCTAVIA_ENABLED" = "true" ]; then
@@ -173,7 +169,7 @@ fi
 
 openstack overcloud deploy --stack overcloud \
     --override-ansible-cfg /home/zuul/ansible_config.cfg --templates /usr/share/openstack-tripleo-heat-templates \
-    --roles-file ${ROLES_FILE} -n /home/zuul/network_data0.yaml --libvirt-type qemu \
+    --roles-file ${ROLES_FILE} -n /home/zuul/network_data.yaml --libvirt-type qemu \
     --ntp-server ${NTP_SERVER} \
     --timeout 90 --overcloud-ssh-user zuul --deployed-server \
     -e /home/zuul/hostnamemap.yaml -e /usr/share/openstack-tripleo-heat-templates/environments/docker-ha.yaml \

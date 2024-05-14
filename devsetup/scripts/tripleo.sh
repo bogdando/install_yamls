@@ -237,7 +237,6 @@ if [ $EDPM_COMPUTE_CELLS -gt 1 ]; then
         scp $SSH_OPT ${MY_TMP_DIR}/overcloud_services_cell${cell}.yaml zuul@$IP:overcloud_services_cell${cell}.yaml
         scp $SSH_OPT ${MY_TMP_DIR}/config-download-cell${cell}.yaml zuul@$IP:config-download-cell${cell}.yaml
     done
-    scp $SSH_OPT ${SCRIPTPATH}/../tripleo/config-download-multistack.yaml zuul@$IP:config-download-multistack.yaml
 else
     scp $SSH_OPT ${SCRIPTPATH}/../tripleo/vips_data.yaml zuul@$IP:vips_data.yaml
     scp $SSH_OPT ${SCRIPTPATH}/../tripleo/network_data.yaml zuul@$IP:network_data.yaml
