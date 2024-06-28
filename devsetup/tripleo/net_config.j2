@@ -33,7 +33,7 @@ network_config:
     mtu: {{ interface_mtu }}
     vlan_id: 44
     addresses:
-    - ip_netmask: 172.21.0.{{ ip_address_suffix }}/16
+    - ip_netmask: 172.21.0.{{ ip_address_suffix }}/24
     - ip_netmask: 172.21.0.2/32
     routes: []
   # internal
@@ -41,7 +41,7 @@ network_config:
     mtu: {{ interface_mtu }}
     vlan_id: 20
     addresses:
-    - ip_netmask: 172.17.0.{{ ip_address_suffix }}/16
+    - ip_netmask: 172.17.0.{{ ip_address_suffix }}/24
     - ip_netmask: 172.17.0.2/32
     routes: []
   # storage
@@ -49,7 +49,7 @@ network_config:
     mtu: {{ interface_mtu }}
     vlan_id: 21
     addresses:
-    - ip_netmask: 172.18.0.{{ ip_address_suffix }}/16
+    - ip_netmask: 172.18.0.{{ ip_address_suffix }}/24
     - ip_netmask: 172.18.0.2/32
     routes: []
   # storage_mgmt
@@ -57,7 +57,7 @@ network_config:
     mtu: {{ interface_mtu }}
     vlan_id: 23
     addresses:
-    - ip_netmask: 172.20.0.{{ ip_address_suffix }}/16
+    - ip_netmask: 172.20.0.{{ ip_address_suffix }}/24
     - ip_netmask: 172.20.0.2/32
     routes: []
   # tenant
@@ -65,5 +65,5 @@ network_config:
     mtu: {{ interface_mtu }}
     vlan_id: 22
     addresses:
-    - ip_netmask: 172.19.0.{{ ip_address_suffix }}/16
+    - ip_netmask: 172.19.0.{{ ip_address_suffix }}/24
     routes: []
