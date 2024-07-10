@@ -15,7 +15,17 @@
 # under the License.
 set -ex
 
-. $HOME/.standalone_env_file
+EDPM_COMPUTE_CEPH_ENABLED=${EDPM_COMPUTE_CEPH_ENABLED:-true}
+EDPM_COMPUTE_SRIOV_ENABLED=${EDPM_COMPUTE_SRIOV_ENABLED:-true}
+EDPM_COMPUTE_DHCP_AGENT_ENABLED=${EDPM_COMPUTE_DHCP_AGENT_ENABLED:-true}
+COMPUTE_DRIVER=${COMPUTE_DRIVER:-"libvirt"}
+INTERFACE_MTU=${INTERFACE_MTU:-1500}
+BARBICAN_ENABLED=${BARBICAN_ENABLED:-true}
+MANILA_ENABLED=${MANILA_ENABLED:-true}
+SWIFT_REPLICATED=${SWIFT_REPLICATED:-false}
+TLSE_ENABLED=${TLSE_ENABLED:-false}
+CLOUD_DOMAIN=${CLOUD_DOMAIN:-localdomain}
+TELEMETRY_ENABLED=${TELEMETRY_ENABLED:-true}
 
 # Use the files created in the previous steps including the network_data.yaml file and thw deployed_network.yaml file.
 # The deployed_network.yaml file hard codes the IPs and VIPs configured from the network.sh

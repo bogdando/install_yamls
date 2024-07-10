@@ -13,9 +13,7 @@ network_config:
   addresses:
   - ip_netmask: {{ ctlplane_ip }}/{{ ctlplane_cidr }}
   - ip_netmask: {{ ctlplane_ip }}/32
-  {%- if ctlplane_vip is defined %}
   - ip_netmask: {{ ctlplane_vip }}/32
-  {%- endif %}
   {% if standalone_vm|default(true) %}
   routes:
   - ip_netmask: 0.0.0.0/0
@@ -37,9 +35,7 @@ network_config:
     vlan_id: 44
     addresses:
     - ip_netmask: 172.21.0.{{ ip_address_suffix }}/24
-  {%- if external_vip is defined %}
-    - ip_netmask: {{ external_vip }}/32
-  {%- endif %}
+    - ip_netmask: 172.21.0.2/32
     routes: []
   # internal
   - type: vlan
@@ -47,9 +43,7 @@ network_config:
     vlan_id: 20
     addresses:
     - ip_netmask: 172.17.0.{{ ip_address_suffix }}/24
-  {%- if internalapi_vip is defined %}
-    - ip_netmask: {{ internalapi_vip }}/32
-  {%- endif %}
+    - ip_netmask: 172.17.0.2/32
     routes: []
   # storage
   - type: vlan
@@ -57,9 +51,7 @@ network_config:
     vlan_id: 21
     addresses:
     - ip_netmask: 172.18.0.{{ ip_address_suffix }}/24
-  {%- if storage_vip is defined %}
-    - ip_netmask: {{ storage_vip }}/32
-  {%- endif %}
+    - ip_netmask: 172.18.0.2/32
     routes: []
   # storage_mgmt
   - type: vlan
@@ -67,9 +59,7 @@ network_config:
     vlan_id: 23
     addresses:
     - ip_netmask: 172.20.0.{{ ip_address_suffix }}/24
-  {%- if storagemgmt_vip is defined %}
-    - ip_netmask: {{ storagemgmt_vip }}/32
-  {%- endif %}
+    - ip_netmask: 172.20.0.2/32
     routes: []
   # tenant
   - type: vlan

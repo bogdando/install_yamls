@@ -22,7 +22,6 @@ export VIRSH_DEFAULT_CONNECT_URI=qemu:///system
 SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 EDPM_COMPUTE_SUFFIX=${1:-"0"}
 COMPUTE_DRIVER=${2:-"libvirt"}
-CELL=${EDPM_CELL:-0}
 EDPM_COMPUTE_ADDITIONAL_NETWORKS=${3:-'[]'}
 EDPM_COMPUTE_ADDITIONAL_HOST_ROUTES=${4:-'[]'}
 EDPM_COMPUTE_NAME=${EDPM_COMPUTE_NAME:-"edpm-compute-${EDPM_COMPUTE_SUFFIX}"}
@@ -93,70 +92,13 @@ else
     HOST_PRIMARY_RESOLV_CONF_ENTRY=${HOST_PRIMARY_RESOLV_CONF_ENTRY:-$GATEWAY}
 fi
 
-cat <<EOF > $MY_TMP_DIR/.standalone_env_file
-export VIRSH_DEFAULT_CONNECT_URI=qemu:///system
-SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-export EDPM_COMPUTE_SUFFIX=${1:-"0"}
-export COMPUTE_DRIVER=${2:-"libvirt"}
-export EDPM_COMPUTE_ADDITIONAL_NETWORKS=${3:-'[]'}
-export EDPM_COMPUTE_ADDITIONAL_HOST_ROUTES=${4:-'[]'}
-export EDPM_COMPUTE_NAME=${EDPM_COMPUTE_NAME:-"edpm-compute-${EDPM_COMPUTE_SUFFIX}"}
-export EDPM_COMPUTE_NETWORK=${EDPM_COMPUTE_NETWORK:-default}
-export STANDALONE_VM=${STANDALONE_VM:-"true"}
-if [[ ${STANDALONE_VM} == "true" ]]; then
-    export EDPM_COMPUTE_NETWORK_IP=$(virsh net-dumpxml ${EDPM_COMPUTE_NETWORK} | xmllint --xpath 'string(/network/ip/@address)' -)
-fi
-export IP_ADRESS_SUFFIX=${IP_ADRESS_SUFFIX:-"$((100+${EDPM_COMPUTE_SUFFIX}))"}
-export IP=${IP:-"${EDPM_COMPUTE_NETWORK_IP%.*}.${IP_ADRESS_SUFFIX}"}
-export OS_NET_CONFIG_IFACE=${OS_NET_CONFIG_IFACE:-"nic1"}
-export GATEWAY=${GATEWAY:-"${EDPM_COMPUTE_NETWORK_IP}"}
-export OUTPUT_DIR=${OUTPUT_DIR:-"${SCRIPTPATH}/../../out/edpm/"}
-export SSH_KEY_FILE=${SSH_KEY_FILE:-"${OUTPUT_DIR}/ansibleee-ssh-key-id_rsa"}
-export SSH_OPT="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i $SSH_KEY_FILE"
-export REPO_SETUP_CMDS=${REPO_SETUP_CMDS:-"${MY_TMP_DIR}/standalone_repos"}
-export CMDS_FILE=${CMDS_FILE:-"${MY_TMP_DIR}/standalone_cmds"}
-export SKIP_TRIPLEO_REPOS=${SKIP_TRIPLEO_REPOS:="false"}
-export CLEANUP_DIR_CMD=${CLEANUP_DIR_CMD:-"rm -Rf"}
-export EDPM_COMPUTE_VCPUS=${COMPUTE_VCPUS:-8}
-export EDPM_COMPUTE_RAM=${COMPUTE_RAM:-20}
-export EDPM_COMPUTE_DISK_SIZE=${COMPUTE_DISK_SIZE:-70}
-export EDPM_COMPUTE_CEPH_ENABLED=${COMPUTE_CEPH_ENABLED:-true}
-export EDPM_COMPUTE_CEPH_NOVA=${COMPUTE_CEPH_NOVA:-true}
-export EDPM_COMPUTE_SRIOV_ENABLED=${COMPUTE_SRIOV_ENABLED:-true}
-export EDPM_COMPUTE_DHCP_AGENT_ENABLED=${COMPUTE_DHCP_AGENT_ENABLED:-true}
-export BARBICAN_ENABLED=${BARBICAN_ENABLED:-true}
-export MANILA_ENABLED=${MANILA_ENABLED:-true}
-export SWIFT_REPLICATED=${SWIFT_REPLICATED:-false}
-export TLSE_ENABLED=${TLSE_ENABLED:-false}
-export CLOUD_DOMAIN=${CLOUD_DOMAIN:-localdomain}
-
-export HOST_PRIMARY_RESOLV_CONF_ENTRY=${HOST_PRIMARY_RESOLV_CONF_ENTRY}
-export INTERFACE_MTU=${INTERFACE_MTU:-1500}
-export NTP_SERVER=${NTP_SERVER:-"clock.corp.redhat.com"}
-export EDPM_COMPUTE_CEPH_ENABLED=${EDPM_COMPUTE_CEPH_ENABLED:-true}
-export CEPH_ARGS="${CEPH_ARGS:--e \$HOME/deployed_ceph.yaml -e /usr/share/openstack-tripleo-heat-templates/environments/cephadm/cephadm-rbd-only.yaml -e \$HOME/nova_noceph.yaml}"
-export CEPH_IP=${CEPH_IP}
-export COMPUTE_DRIVER=${COMPUTE_DRIVER:-"libvirt"}
-export TOTAL_NODES=${TOTAL_NODES:-1}
-export EDPM_COMPUTE_SUFFIX=${1:-"0"}
-export EDPM_COMPUTE_NAME=${EDPM_COMPUTE_NAME:-"edpm-compute-${EDPM_COMPUTE_SUFFIX}"}
-export IP=${IP}
-export GATEWAY=${GATEWAY}
-export STANDALONE_VM=${STANDALONE_VM}
-EOF
-
-cat <<EOF > $CMDS_FILE
-. \$HOME/.standalone_env_file
-
+if [[ ! -f $CMDS_FILE ]]; then
+    cat <<EOF > $CMDS_FILE
+set -ex
 sudo dnf install -y podman python3-tripleoclient util-linux lvm2 cephadm
 
-if [[ "\$EDPM_COMPUTE_SUFFIX" == "0" ]]; then
-    sudo hostnamectl set-hostname standalone.${CLOUD_DOMAIN}
-    sudo hostnamectl set-hostname standalone.${CLOUD_DOMAIN} --transient
-else
-    sudo hostnamectl set-hostname \${EDPM_COMPUTE_NAME}.${CLOUD_DOMAIN}
-    sudo hostnamectl set-hostname \${EDPM_COMPUTE_NAME}.${CLOUD_DOMAIN} --transient
-fi
+sudo hostnamectl set-hostname standalone.${CLOUD_DOMAIN}
+sudo hostnamectl set-hostname standalone.${CLOUD_DOMAIN} --transient
 
 cat >\$HOME/nova_noceph.yaml <<__EOF__
 parameter_defaults:
@@ -179,6 +121,24 @@ parameter_defaults:
 resource_registry:
   OS::TripleO::Services::NeutronDhcpAgent: deployment/neutron/neutron-dhcp-container-puppet.yaml
 __EOF__
+
+export HOST_PRIMARY_RESOLV_CONF_ENTRY=${HOST_PRIMARY_RESOLV_CONF_ENTRY}
+export INTERFACE_MTU=${INTERFACE_MTU:-1500}
+export NTP_SERVER=${NTP_SERVER:-"clock.corp.redhat.com"}
+export EDPM_COMPUTE_CEPH_ENABLED=${EDPM_COMPUTE_CEPH_ENABLED:-true}
+export EDPM_COMPUTE_CEPH_NOVA=${EDPM_COMPUTE_CEPH_NOVA:-true}
+export CEPH_ARGS="${CEPH_ARGS:--e \$HOME/deployed_ceph.yaml -e /usr/share/openstack-tripleo-heat-templates/environments/cephadm/cephadm-rbd-only.yaml}"
+[[ "\$EDPM_COMPUTE_CEPH_NOVA" == "false" ]] && export CEPH_ARGS="\${CEPH_ARGS} -e \$HOME/nova_noceph.yaml"
+export COMPUTE_DRIVER=${COMPUTE_DRIVER:-"libvirt"}
+export IP=${IP}
+export GATEWAY=${GATEWAY}
+export STANDALONE_VM=${STANDALONE_VM}
+export SWIFT_REPLICATED=${SWIFT_REPLICATED}
+export TLSE_ENABLED=${TLSE_ENABLED}
+export CLOUD_DOMAIN=${CLOUD_DOMAIN}
+export OUTPUT_DIR=${OUTPUT_DIR:-"${SCRIPTPATH}/../../out/edpm/"}
+export SSH_KEY_FILE=${SSH_KEY_FILE:-"${OUTPUT_DIR}/ansibleee-ssh-key-id_rsa"}
+export SSH_OPT="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i $SSH_KEY_FILE"
 
 if [[ -f \$HOME/containers-prepare-parameters.yaml ]]; then
     echo "Using existing containers-prepare-parameters.yaml - contents:"
@@ -222,6 +182,7 @@ sudo cp /tmp/Standalone.yaml \$HOME/Standalone.yaml
 # is not true, the script will return 0 and cause an error in CI
 exit 0
 EOF
+fi
 
 while [[ $(ssh -o BatchMode=yes -o ConnectTimeout=5 $SSH_OPT root@$IP echo ok) != "ok" ]]; do
     sleep 5
@@ -246,6 +207,7 @@ ctlplane_ip: ${IP}
 os_net_config_iface: ${OS_NET_CONFIG_IFACE}
 standalone_vm: ${STANDALONE_VM}
 ctlplane_subnet: ${IP%.*}.0/24
+ctlplane_vip: ${IP%.*}.99
 ip_address_suffix: ${IP_ADRESS_SUFFIX}
 interface_mtu: ${INTERFACE_MTU:-1500}
 gateway_ip: ${GATEWAY}
@@ -253,11 +215,6 @@ dns_server: ${PRIMARY_RESOLV_CONF_ENTRY}
 compute_driver: ${COMPUTE_DRIVER}
 sriov_agent: ${EDPM_COMPUTE_SRIOV_ENABLED}
 dhcp_agent: ${EDPM_COMPUTE_DHCP_AGENT_ENABLED}
-ctlplane_vip: ${IP%.*}.$(( 99 - CELL ))
-external_vip: 172.21.${CELL}.2
-internalapi_vip: 172.17.${CELL}.2
-storage_vip: 172.18.${CELL}.2
-storagemgmt_vip: 172.20.${CELL}.2
 EOF
 
 jinja2_render standalone/network_data.j2 "${J2_VARS_FILE}" > ${MY_TMP_DIR}/network_data.yaml
@@ -266,7 +223,6 @@ jinja2_render standalone/net_config.j2 "${J2_VARS_FILE}" > ${MY_TMP_DIR}/net_con
 jinja2_render standalone/role.j2 "${J2_VARS_FILE}" > ${MY_TMP_DIR}/Standalone.yaml
 
 # Copying files
-scp $SSH_OPT $MY_TMP_DIR/.standalone_env_file root@$IP:.standalone_env_file
 scp $SSH_OPT $REPO_SETUP_CMDS root@$IP:/tmp/repo-setup.sh
 scp $SSH_OPT $CMDS_FILE root@$IP:/tmp/standalone-deploy.sh
 scp $SSH_OPT ${MY_TMP_DIR}/net_config.yaml root@$IP:/tmp/net_config.yaml
@@ -293,3 +249,7 @@ fi
 if [[ -n ${STANDALONE_EXTRA_CMD} ]]; then
     ssh $SSH_OPT root@$IP "${STANDALONE_EXTRA_CMD}"
 fi
+ssh $SSH_OPT root@$IP "bash /tmp/standalone-deploy.sh"
+deploy_result="$?"
+ssh $SSH_OPT root@$IP "rm -f /tmp/standalone-deploy.sh"
+exit $deploy_result

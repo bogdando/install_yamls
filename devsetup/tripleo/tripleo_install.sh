@@ -177,6 +177,7 @@ openstack overcloud deploy --stack overcloud \
     -e /usr/share/openstack-tripleo-heat-templates/environments/low-memory-usage.yaml \
     -e /usr/share/openstack-tripleo-heat-templates/environments/debug.yaml --validation-warnings-fatal ${ENV_ARGS} ${CEPH_OVERCLOUD_ARGS} \
     -e /home/zuul/overcloud_services.yaml -e /home/zuul/${cdfiles[0]} \
+    -e /home/zuul/vips_provision_out.yaml -e /home/zuul/network_provision_out.yaml --disable-validations --heat-type pod \
     --disable-protected-resource-types --log-file overcloud_deployment.log
 if [ $EDPM_COMPUTE_CELLS -gt 1 ] ; then
     # FIXME(bogdando): w/a OSP17.1 https://bugzilla.redhat.com/show_bug.cgi?id=2294898 until the fix merged and shipped
