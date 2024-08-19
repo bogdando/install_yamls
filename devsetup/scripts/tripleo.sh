@@ -85,15 +85,21 @@ cat >\$HOME/nopingtests.yaml <<__EOF__
 parameter_defaults:
     ValidateControllersIcmp: false
     ValidateGatewaysIcmp: false
-    PingTestGatewayIPsMap: false
-    PingTestIpsMap: false
+    PingTestGatewayIPsMap: {}
+    PingTestIpsMap:
+        BlockStorage: ''
+        CellController: ''
+        CellControllerCompute: ''
+        CephStorage: ''
+        Compute: ''
+        Controller: ''
+        ObjectStorage: ''
 __EOF__
 
 export HOST_PRIMARY_RESOLV_CONF_ENTRY=${HOST_PRIMARY_RESOLV_CONF_ENTRY}
 export INTERFACE_MTU=${INTERFACE_MTU:-1500}
 export NTP_SERVER=${NTP_SERVER:-"pool.ntp.org"}
 export IP=${IP}
-export IP_ADRESS_SUFFIX=${IP_ADRESS_SUFFIX}
 export GATEWAY=${GATEWAY}
 export EDPM_COMPUTE_CEPH_ENABLED=${COMPUTE_CEPH_ENABLED:-false}
 export EDPM_COMPUTE_CEPH_NOVA=${COMPUTE_CEPH_NOVA:-false}
