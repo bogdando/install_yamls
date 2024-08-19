@@ -146,6 +146,7 @@ done
 MANILA_ENABLED=${MANILA_ENABLED:-true}
 if [ "$MANILA_ENABLED" = "true" ]; then
     ENV_ARGS+=" -e /usr/share/openstack-tripleo-heat-templates/environments/manila-cephfsnative-config.yaml"
+fi
 # Add octavia bits
 OCTAVIA_ENABLED=${OCTAVIA_ENABLED:-false}
 if [ "$OCTAVIA_ENABLED" = "true" ]; then
