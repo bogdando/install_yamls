@@ -100,6 +100,7 @@ else
     sed -i "s/ compute-2/ ${compute2}/" config-download-cell2.yaml
 fi
 set -e
+
 # read all the contents of hostnamemap except the yaml separator into one line
 hostnamemap=$(grep -v "\---" hostnamemap.yaml | tr '\n' '\r')
 hostnamemap="$hostnamemap\r  ControllerHostnameFormat: '%stackname%-controller-%index%'\r"
