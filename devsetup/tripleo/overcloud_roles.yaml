@@ -22,8 +22,6 @@
       subnet: storage_mgmt_subnet
     Tenant:
       subnet: tenant_subnet
-    External:
-      subnet: external_subnet
   # For systems with both IPv4 and IPv6, you may specify a gateway network for
   # each, such as ['ControlPlane', 'External']
   default_route_networks: ['ControlPlane']
@@ -287,8 +285,6 @@
       subnet: internal_api_subnet
     Tenant:
       subnet: tenant_subnet
-    External:
-      subnet: external_subnet
     Storage:
       subnet: storage_subnet
   default_route_networks: ['ControlPlane']

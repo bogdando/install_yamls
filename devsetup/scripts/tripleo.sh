@@ -81,21 +81,6 @@ sudo dnf install -y podman python3-tripleoclient util-linux lvm2
 sudo hostnamectl set-hostname undercloud.localdomain
 sudo hostnamectl set-hostname undercloud.localdomain --transient
 
-cat >\$HOME/nopingtests.yaml <<__EOF__
-parameter_defaults:
-    ValidateControllersIcmp: false
-    ValidateGatewaysIcmp: false
-    PingTestGatewayIPsMap: {}
-    PingTestIpsMap:
-        BlockStorage: ''
-        CellController: ''
-        CellControllerCompute: ''
-        CephStorage: ''
-        Compute: ''
-        Controller: ''
-        ObjectStorage: ''
-__EOF__
-
 export HOST_PRIMARY_RESOLV_CONF_ENTRY=${HOST_PRIMARY_RESOLV_CONF_ENTRY}
 export INTERFACE_MTU=${INTERFACE_MTU:-1500}
 export NTP_SERVER=${NTP_SERVER:-"pool.ntp.org"}
@@ -232,8 +217,6 @@ scp $SSH_OPT ${SCRIPTPATH}/../tripleo/tripleo_install.sh zuul@$IP:tripleo_instal
 scp $SSH_OPT ${SCRIPTPATH}/../tripleo/hieradata_overrides_undercloud.yaml zuul@$IP:hieradata_overrides_undercloud.yaml
 scp $SSH_OPT ${SCRIPTPATH}/../tripleo/undercloud-parameter-defaults.yaml zuul@$IP:undercloud-parameter-defaults.yaml
 scp $SSH_OPT ${MY_TMP_DIR}/undercloud.conf zuul@$IP:undercloud.conf
-scp $SSH_OPT ${MY_TMP_DIR}/vips_data0.yaml zuul@$IP:vips_data.yaml
-scp $SSH_OPT ${MY_TMP_DIR}/network_data0.yaml zuul@$IP:network_data.yaml
 scp $SSH_OPT ${SCRIPTPATH}/../tripleo/config-download-networker.yaml zuul@$IP:config-download-networker.yaml
 scp $SSH_OPT ${SCRIPTPATH}/../tripleo/nova_noceph.yaml zuul@$IP:nova_noceph.yaml
 if [ $EDPM_COMPUTE_CELLS -gt 1 ]; then
