@@ -99,6 +99,7 @@ set +x
 if [ ! -f \$HOME/containers-prepare-parameters.yaml ]; then
     login_args=" "
     [ "\$RH_REGISTRY_USER" ] && [ -n "\$RH_REGISTRY_PWD" ] && login_args="--enable-registry-login"
+    set -x
     openstack tripleo container image prepare default \
         --output-env-file \$HOME/containers-prepare-parameters.yaml \${login_args}
 else
