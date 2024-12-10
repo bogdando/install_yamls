@@ -55,6 +55,7 @@
   service_net_map_replace: external
   subnets:
     external_subnet:
+      #gateway_ip: '172.21.0.1' # was on my dev branch, check if needed? also for upstream ci?
       vlan: 44
       ip_subnet: '172.21.0.0/24'
       allocation_pools: [{'start': '172.21.0.120', 'end': '172.21.0.250'}]
