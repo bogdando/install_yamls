@@ -109,7 +109,6 @@ set +x
 if [ ! -f \$HOME/containers-prepare-parameters.yaml ]; then
     login_args=" "
     [ "\$RH_REGISTRY_USER" ] && [ -n "\$RH_REGISTRY_PWD" ] && login_args="--enable-registry-login"
-    set -x
     openstack tripleo container image prepare default \
         --output-env-file \$HOME/containers-prepare-parameters.yaml \${login_args}
     # Adoption requires Ceph 7 (Reef) as a requirement. Instead of performing a Ceph
@@ -249,7 +248,6 @@ scp $SSH_OPT ${SCRIPTPATH}/../tripleo/tripleo_install.sh zuul@$IP:tripleo_instal
 scp $SSH_OPT ${SCRIPTPATH}/../tripleo/hieradata_overrides_undercloud.yaml zuul@$IP:hieradata_overrides_undercloud.yaml
 scp $SSH_OPT ${SCRIPTPATH}/../tripleo/undercloud-parameter-defaults.yaml zuul@$IP:undercloud-parameter-defaults.yaml
 scp $SSH_OPT ${MY_TMP_DIR}/undercloud.conf zuul@$IP:undercloud.conf
-scp $SSH_OPT ${SCRIPTPATH}/../tripleo/config-download-networker.yaml zuul@$IP:config-download-networker.yaml
 scp $SSH_OPT ${SCRIPTPATH}/../tripleo/nova_noceph.yaml zuul@$IP:nova_noceph.yaml
 scp $SSH_OPT ${SCRIPTPATH}/../tripleo/hugepages.yaml zuul@$IP:hugepages.yaml
 if [ $EDPM_COMPUTE_CELLS -gt 1 ]; then
