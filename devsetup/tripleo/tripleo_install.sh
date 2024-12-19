@@ -286,5 +286,5 @@ if [ $EDPM_COMPUTE_CELLS -gt 1 ] ; then
         -e tripleo_stack_name=all \
         -e role_networks='["InternalApi"]' \
         -e hostname_resolve_network=ctlplane -e plan=overcloud \
-        -e @/home/zuul/overcloud-deploy/overcloud/config-download/overcloud/global_vars.yaml
+        -e @/home/zuul/overcloud-deploy/overcloud/config-download/overcloud/global_vars.yaml \
 fi
